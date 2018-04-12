@@ -14,7 +14,7 @@ import { CONFIG } from '../../initializers'
 import { SortField } from '../../../shared/models/videos/video-sort.type'
 import { areValidationErrors } from './utils'
 
-const urlShouldStartWith = CONFIG.WEBSERVER.SCHEME + '://' + join(CONFIG.WEBSERVER.HOST, 'feeds') + '/'
+const urlShouldStartWith = CONFIG.WEBSERVER.URL + /feeds/
 const isURLOptions = {
   require_host: true,
   require_tld: true
@@ -44,29 +44,8 @@ const feedsValidator = [
   }
 ]
 
-const feedsQueryCleaner = [
-  async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    res.locals.params = {}
-    return next()
-  }
-]
-
-const feedsMissingParameters = [
-  async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (areValidationErrors(req, res)) return
-
-    if (!req.query.start) req.query.start = 0
-    if (!req.query.end) req.query.end = 16
-    if (!req.query.sort) req.query.sort = '-createdAt' as SortField
-
-    return next()
-  }
-]
-
 // ---------------------------------------------------------------------------
 
 export {
-  feedsValidator,
-  feedsQueryCleaner,
-  feedsMissingParameters
+  feedsValidator
 }

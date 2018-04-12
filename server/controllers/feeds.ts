@@ -5,8 +5,6 @@ import { CONFIG, STATIC_PATHS } from '../initializers'
 import {
   asyncMiddleware,
   feedsValidator,
-  feedsQueryCleaner,
-  feedsMissingParameters,
   paginationValidator,
   setDefaultPagination,
   setDefaultSort,
@@ -29,9 +27,8 @@ const Feed = require('feed')
 const feedsRouter = express.Router()
 
 // multipurpose endpoint
-feedsRouter.use('/feeds/videos.(xml|json(1)?|rss(2)?|atom(1)?)',
+feedsRouter.use('/feeds/videos.(xml|json1?|rss2?|atom1?)',
   feedsValidator,
-  feedsMissingParameters,
   asyncMiddleware(generateFeed)
 )
 
@@ -45,16 +42,16 @@ export {
 
 async function generateFeed (req: express.Request, res: express.Response, next: express.NextFunction) {
   let feed = initFeed()
+  let feedStart = 0
+  let feedCount = 10
+  let feedSort = '-createdAt'
 
   // should we limit results to an account?
   // (beware, only user accounts have videos)
   let isAccountFiltering = false
   let accountId: number
   let accountName: string
-  if (req.params.accountId ||
-      req.params.accountName ||
-      req.query.accountId ||
-      req.query.accountName) {
+  if (req.query.accountId || req.query.accountName) {
     isAccountFiltering = true
   }
 
@@ -73,22 +70,22 @@ async function generateFeed (req: express.Request, res: express.Response, next: 
   if (isAccountFiltering) {
     resultList = await Bluebird.resolve(VideoModel.listUserVideosForApi(
       accountId,
-      req.query.start,
-      req.query.count,
-      req.query.sort
+      feedStart,
+      feedCount,
+      feedSort
     ))
   } else {
     resultList = await Bluebird.resolve(VideoModel.listForApi(
-      req.query.start,
-      req.query.count,
-      req.query.sort,
+      feedStart,
+      feedCount,
+      feedSort,
       req.query.filter
     ))
   }
 
   // adding video items to the feed, one at a time
   resultList.data.forEach(video => {
-    let formattedAccount = video.toFormattedJSON().account
+    const formattedAccount = video.toFormattedJSON().account
 
     feed.addItem({
       title: video.name,
@@ -102,8 +99,7 @@ async function generateFeed (req: express.Request, res: express.Response, next: 
         link: formattedAccount.url
       }],
       date: video.publishedAt,
-      image: CONFIG.WEBSERVER.SCHEME + '://' + CONFIG.WEBSERVER.HOST +
-             STATIC_PATHS.THUMBNAILS + video.getThumbnailName()
+      image: CONFIG.WEBSERVER.URL + video.getThumbnailPath()
     })
   })
 
@@ -114,7 +110,7 @@ async function generateFeed (req: express.Request, res: express.Response, next: 
 }
 
 function initFeed () {
-  const webserverUrl = CONFIG.WEBSERVER.SCHEME + '://' + CONFIG.WEBSERVER.HOST
+  const webserverUrl = CONFIG.WEBSERVER.URL
 
   return new Feed({
     title: CONFIG.INSTANCE.NAME,
@@ -142,17 +138,17 @@ function initFeed () {
 
 function returnFeed (feed, req: express.Request, res: express.Response) {
   // if the pathname ends with a feed extension, respect it
-  if (url.parse(req.originalUrl).pathname.endsWith('.atom') ||
-      url.parse(req.originalUrl).pathname.endsWith('.atom1')) {
+  const pathname = url.parse(req.originalUrl).pathname
+  if (pathname.endsWith('.atom') ||
+      pathname.endsWith('.atom1')) {
     res.set('Content-Type', 'application/atom+xml')
     res.send(feed.atom1())
-  } else if (url.parse(req.originalUrl).pathname.endsWith('.json') ||
-             url.parse(req.originalUrl).pathname.endsWith('.json1')) {
+  } else if (pathname.endsWith('.json') ||
+             pathname.endsWith('.json1')) {
     res.set('Content-Type', 'application/json')
     res.send(feed.json1())
-  } else if (url.parse(req.originalUrl).pathname.endsWith('.rss') ||
-             url.parse(req.originalUrl).pathname.endsWith('.rss2') ||
-             url.parse(req.originalUrl).pathname.endsWith('.xml')) {
+  } else if (pathname.endsWith('.rss') ||
+             pathname.endsWith('.rss2')) {
     res.set('Content-Type', 'application/rss+xml')
     res.send(feed.rss2())
   // else we look at the format query parameter
@@ -160,11 +156,6 @@ function returnFeed (feed, req: express.Request, res: express.Response) {
              req.query.format === 'atom1') {
     res.set('Content-Type', 'application/atom+xml')
     res.send(feed.atom1())
-  } else if (req.query.format === 'json' ||
-             req.query.format === 'json1') {
-    res.set('Content-Type', 'application/json')
-    res.send(feed.json1())
-  // lastly we fall back to the rss default
   } else {
     res.set('Content-Type', 'application/rss+xml')
     res.send(feed.rss2())

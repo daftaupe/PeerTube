@@ -117,36 +117,26 @@ export class VideoService {
       .catch((res) => this.restExtractor.handleError(res))
   }
 
-  baseFeed (
-    videoPagination: ComponentPagination,
-    sort: SortField
-  ): object {
-    const pagination = this.restService.componentPaginationToRestPagination(videoPagination)
-
-    let params = new HttpParams()
-    params = this.restService.addRestGetParams(params, pagination, sort)
-
+  baseFeed () {
     let feed = {}
+
     for (let item in FeedFormat) {
-      feed[FeedFormat[item]] = VideoService.BASE_FEEDS_URL + item.toLowerCase() + '?' + params.toString()
+      feed[FeedFormat[item]] = VideoService.BASE_FEEDS_URL + item.toLowerCase()
     }
 
     return feed
   }
 
   getFeed (
-    videoPagination: ComponentPagination,
-    sort: SortField,
     filter?: VideoFilter
-  ): object {
+  ) {
     let params = new HttpParams()
     params = this.restService.addRestGetParams(params)
+    let feed = this.baseFeed()
 
     if (filter) {
       params = params.set('filter', filter)
     }
-
-    let feed = this.baseFeed(videoPagination, sort)
     for (let item in feed) {
       feed[item] = feed[item] + params.toString()
     }
@@ -157,21 +147,14 @@ export class VideoService {
   getAccountFeed (
     accountName: string,
     host?: string
-  ): object {
+  ) {
     let params = new HttpParams()
     params = this.restService.addRestGetParams(params)
     params = params.set('accountName', accountName)
+    let feed = this.baseFeed()
 
-    let videoPagination: ComponentPagination = {
-      currentPage: 1,
-      itemsPerPage: 10,
-      totalItems: null
-    }
-    let sort: SortField = '-createdAt'
-
-    let feed = this.baseFeed(videoPagination, sort)
     for (let item in feed) {
-      feed[item] = feed[item].substring(0, feed[item].indexOf('?')) + '?' + params.toString()
+      feed[item] = feed[item] + '?' + params.toString()
     }
 
     return feed

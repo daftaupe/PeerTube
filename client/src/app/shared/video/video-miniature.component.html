@@ -14,17 +14,6 @@
     <span class="video-miniature-created-at-views">{{ video.publishedAt | myFromNow }} - {{ video.views | myNumberFormatter }} views</span>
     <span class="video-miniature-account">
       {{ video.by }}
-      <span *ngIf="syndication.isSupported" class="icon icon-syndication" 
-            [popover]="feedsList"
-            placement="bottom"
-            [outsideClick]="true">
-      </span>
     </span>
   </div>
 </div>
-
-<ng-template #feedsList>
-  <div *ngFor="let key of syndication.items | keys">
-    <a [href]="syndication.items[key]">{{ key }}</a>
-  </div>
-</ng-template>

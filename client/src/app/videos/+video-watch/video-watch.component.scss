@@ -66,14 +66,23 @@
       .video-info-channel {
         font-weight: $font-semibold;
         font-size: 15px;
+      }
+
+      .video-info-by {
+        display: flex;
+        align-items: center;
+        font-size: 13px;
+
+        img {
+          @include avatar(18px);
+
+          margin-left: 7px;
+        }
 
         a {
-          text-decoration: none;
+          @include disable-default-a-behaviour;
+
           color: black;
-          
-          &:hover {
-            text-decoration: none;
-          }
         }
     
         .icon {
@@ -86,18 +95,6 @@
             background-image: url('../../../assets/images/global/syndication.svg');
             opacity: .3;
           }
-        }
-      }
-
-      .video-info-by {
-        display: flex;
-        align-items: center;
-        font-size: 13px;
-
-        img {
-          @include avatar(18px);
-
-          margin-left: 7px;
         }
       }
 

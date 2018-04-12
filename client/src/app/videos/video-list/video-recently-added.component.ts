@@ -47,8 +47,7 @@ export class VideoRecentlyAddedComponent extends AbstractVideoList implements On
   }
 
   generateSyndicationList () {
-    const newPagination = immutableAssign(this.pagination, { currentPage: 1 })
-    const feeds = this.videoService.getFeed(newPagination, this.sort)
+    const feeds = this.videoService.getFeed()
     this.syndication.items['rss 2.0'] = feeds[FeedFormat.RSS]
     this.syndication.items['atom 1.0'] = feeds[FeedFormat.ATOM]
     this.syndication.items['json 1.0'] = feeds[FeedFormat.JSON]

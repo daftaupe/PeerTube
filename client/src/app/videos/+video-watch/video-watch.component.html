@@ -19,16 +19,16 @@
           <div class="video-info-channel">
             {{ video.channel.displayName }}
             <!-- Here will be the subscribe button -->
-            <span *ngIf="syndication.isSupported" class="icon icon-syndication" 
-                  [popover]="feedsList"
-                  placement="bottom"
-                  [outsideClick]="true">
-            </span>
           </div>
 
           <div class="video-info-by">
             By {{ video.by }}
             <img [src]="getAvatarPath()" alt="Account avatar" />
+            <span *ngIf="syndication.isSupported" class="icon icon-syndication" 
+                  [popover]="feedsList"
+                  placement="bottom"
+                  [outsideClick]="true">
+            </span>
           </div>
         </div>
 

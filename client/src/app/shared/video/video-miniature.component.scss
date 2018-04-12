@@ -46,26 +46,5 @@
       font-size: 13px;
       color: #585858;
     }
-
-    a {
-      text-decoration: none;
-      color: black;
-      
-      &:hover {
-        text-decoration: none;
-      }
-    }
-
-    .icon {
-      @include icon(10px);
-  
-      margin-left: 4px;
-  
-      &.icon-syndication {
-        position: relative;
-        background-image: url('../../../assets/images/global/syndication.svg');
-        opacity: .3;
-      }
-    }
   }
 }

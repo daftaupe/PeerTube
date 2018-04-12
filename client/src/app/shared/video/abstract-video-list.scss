@@ -10,18 +10,15 @@
 
 .margin-content {
   a {
-    text-decoration: none;
+    @include disable-default-a-behaviour;
+
     color: black;
-    
-    &:hover {
-      text-decoration: none;
-    }
   }
 
   .icon {
     @include icon(12px);
 
-    margin-left: 10px;
+    margin-left: -45px;
 
     &.icon-syndication {
       position: relative;
