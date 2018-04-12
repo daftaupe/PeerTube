@@ -10,6 +10,7 @@ import { MarkdownService } from '@app/videos/shared'
 
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown'
 import { ModalModule } from 'ngx-bootstrap/modal'
+import { PopoverModule } from 'ngx-bootstrap/popover'
 import { TabsModule } from 'ngx-bootstrap/tabs'
 import { TooltipModule } from 'ngx-bootstrap/tooltip'
 import { BytesPipe, KeysPipe, NgPipesModule } from 'ngx-pipes'
@@ -39,6 +40,7 @@ import { VideoService } from './video/video.service'
 
     BsDropdownModule.forRoot(),
     ModalModule.forRoot(),
+    PopoverModule.forRoot(),
     TabsModule.forRoot(),
     TooltipModule.forRoot(),
 
@@ -68,6 +70,7 @@ import { VideoService } from './video/video.service'
 
     BsDropdownModule,
     ModalModule,
+    PopoverModule,
     TabsModule,
     TooltipModule,
     PrimeSharedModule,

@@ -19,6 +19,11 @@
           <div class="video-info-channel">
             {{ video.channel.displayName }}
             <!-- Here will be the subscribe button -->
+            <span *ngIf="syndication.isSupported" class="icon icon-syndication" 
+                  [popover]="feedsList"
+                  placement="bottom"
+                  [outsideClick]="true">
+            </span>
           </div>
 
           <div class="video-info-by">
@@ -196,4 +201,10 @@
   <my-video-share #videoShareModal [video]="video"></my-video-share>
   <my-video-download #videoDownloadModal [video]="video"></my-video-download>
   <my-video-report #videoReportModal [video]="video"></my-video-report>
+</ng-template>
+
+<ng-template #feedsList>
+  <div *ngFor="let key of syndication.items | keys">
+    <a [href]="syndication.items[key]">{{ key }}</a>
+  </div>
 </ng-template>

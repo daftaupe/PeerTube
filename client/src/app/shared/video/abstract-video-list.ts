@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router'
 import { isInMobileView } from '@app/shared/misc/utils'
 import { InfiniteScrollerDirective } from '@app/shared/video/infinite-scroller.directive'
 import { NotificationsService } from 'angular2-notifications'
+import { PopoverModule } from 'ngx-bootstrap/popover'
 import 'rxjs/add/operator/debounceTime'
 import { Observable } from 'rxjs/Observable'
 import { fromEvent } from 'rxjs/observable/fromEvent'
@@ -11,6 +12,7 @@ import { AuthService } from '../../core/auth'
 import { ComponentPagination } from '../rest/component-pagination.model'
 import { SortField } from './sort-field.type'
 import { Video } from './video.model'
+import { FeedFormat } from '../../../../../shared'
 
 export abstract class AbstractVideoList implements OnInit, OnDestroy {
   private static LINES_PER_PAGE = 4
@@ -25,6 +27,11 @@ export abstract class AbstractVideoList implements OnInit, OnDestroy {
   }
   sort: SortField = '-createdAt'
   defaultSort: SortField = '-createdAt'
+  syndication = {
+    isSupported: false,
+    items: {}
+  }
+
   loadOnInit = true
   pageHeight: number
   videoWidth: number
@@ -47,6 +54,7 @@ export abstract class AbstractVideoList implements OnInit, OnDestroy {
   private resizeSubscription: Subscription
 
   abstract getVideosObservable (page: number): Observable<{ videos: Video[], totalVideos: number}>
+  abstract generateSyndicationList ()
 
   get user () {
     return this.authService.getUser()

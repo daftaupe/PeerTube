@@ -1,11 +1,18 @@
 import { NgModule } from '@angular/core'
-import { RouterModule, Routes } from '@angular/router'
+import { RouterModule, Routes, UrlSegment } from '@angular/router'
 import { VideoLocalComponent } from '@app/videos/video-list/video-local.component'
 import { MetaGuard } from '@ngx-meta/core'
 import { VideoSearchComponent } from './video-list'
 import { VideoRecentlyAddedComponent } from './video-list/video-recently-added.component'
 import { VideoTrendingComponent } from './video-list/video-trending.component'
 import { VideosComponent } from './videos.component'
+import { VideoService } from '@app/shared/video/video.service'
+
+function feedFormatsOfBase (url: UrlSegment[], base: string) {
+  return url.length === 1 && url[0].path.startsWith(base) && url[0].path.endsWith('.html') ? ({ consumed: url }) : null
+}
+function feedFormatsOfLocal (url: UrlSegment[]) { return feedFormatsOfBase(url, 'local') }
+function feedFormatsOfTrending (url: UrlSegment[]) { return feedFormatsOfBase(url, 'trending') }
 
 const videosRoutes: Routes = [
   {

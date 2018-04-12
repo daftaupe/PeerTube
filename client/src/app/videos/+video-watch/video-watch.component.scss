@@ -66,6 +66,27 @@
       .video-info-channel {
         font-weight: $font-semibold;
         font-size: 15px;
+
+        a {
+          text-decoration: none;
+          color: black;
+          
+          &:hover {
+            text-decoration: none;
+          }
+        }
+    
+        .icon {
+          @include icon(10px);
+      
+          margin-left: 4px;
+      
+          &.icon-syndication {
+            position: relative;
+            background-image: url('../../../assets/images/global/syndication.svg');
+            opacity: .3;
+          }
+        }
       }
 
       .video-info-by {

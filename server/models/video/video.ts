@@ -707,7 +707,8 @@ export class VideoModel extends Model<VideoModel> {
     const serverActor = await getServerActor()
 
     return VideoModel.scope({ method: [ ScopeNames.AVAILABLE_FOR_LIST, serverActor.id ] })
-      .findAndCountAll(query).then(({ rows, count }) => {
+      .findAndCountAll(query)
+      .then(({ rows, count }) => {
         return {
           data: rows,
           total: count

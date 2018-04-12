@@ -8,6 +8,7 @@ import { ResultList } from '../../../../../shared/models/result-list.model'
 import { UserVideoRateUpdate } from '../../../../../shared/models/videos/user-video-rate-update.model'
 import { UserVideoRate } from '../../../../../shared/models/videos/user-video-rate.model'
 import { VideoFilter } from '../../../../../shared/models/videos/video-query.type'
+import { FeedFormat } from '../../../../../shared/models/feeds/feed-format.enum'
 import { VideoRateType } from '../../../../../shared/models/videos/video-rate.type'
 import { VideoUpdate } from '../../../../../shared/models/videos/video-update.model'
 import { environment } from '../../../environments/environment'
@@ -24,6 +25,7 @@ import { objectToFormData } from '@app/shared/misc/utils'
 @Injectable()
 export class VideoService {
   private static BASE_VIDEO_URL = environment.apiUrl + '/api/v1/videos/'
+  private static BASE_FEEDS_URL = environment.apiUrl + '/feeds/videos.'
 
   constructor (
     private authHttp: HttpClient,
@@ -113,6 +115,66 @@ export class VideoService {
       .get(VideoService.BASE_VIDEO_URL, { params })
       .map(this.extractVideos)
       .catch((res) => this.restExtractor.handleError(res))
+  }
+
+  baseFeed (
+    videoPagination: ComponentPagination,
+    sort: SortField
+  ): object {
+    const pagination = this.restService.componentPaginationToRestPagination(videoPagination)
+
+    let params = new HttpParams()
+    params = this.restService.addRestGetParams(params, pagination, sort)
+
+    let feed = {}
+    for (let item in FeedFormat) {
+      feed[FeedFormat[item]] = VideoService.BASE_FEEDS_URL + item.toLowerCase() + '?' + params.toString()
+    }
+
+    return feed
+  }
+
+  getFeed (
+    videoPagination: ComponentPagination,
+    sort: SortField,
+    filter?: VideoFilter
+  ): object {
+    let params = new HttpParams()
+    params = this.restService.addRestGetParams(params)
+
+    if (filter) {
+      params = params.set('filter', filter)
+    }
+
+    let feed = this.baseFeed(videoPagination, sort)
+    for (let item in feed) {
+      feed[item] = feed[item] + params.toString()
+    }
+
+    return feed
+  }
+
+  getAccountFeed (
+    accountName: string,
+    host?: string
+  ): object {
+    let params = new HttpParams()
+    params = this.restService.addRestGetParams(params)
+    params = params.set('accountName', accountName)
+
+    let videoPagination: ComponentPagination = {
+      currentPage: 1,
+      itemsPerPage: 10,
+      totalItems: null
+    }
+    let sort: SortField = '-createdAt'
+
+    let feed = this.baseFeed(videoPagination, sort)
+    for (let item in feed) {
+      feed[item] = feed[item].substring(0, feed[item].indexOf('?')) + '?' + params.toString()
+    }
+
+    return feed
   }
 
   searchVideos (

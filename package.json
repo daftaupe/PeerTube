@@ -67,6 +67,7 @@
     "express-oauth-server": "^2.0.0",
     "express-rate-limit": "^2.11.0",
     "express-validator": "^5.0.0",
+    "feed": "^1.1.1",
     "fluent-ffmpeg": "^2.1.0",
     "js-yaml": "^3.5.4",
     "jsonld": "^1.0.1",

@@ -9,7 +9,7 @@ import { Subscription } from 'rxjs/Subscription'
 import * as videojs from 'video.js'
 import 'videojs-hotkeys'
 import * as WebTorrent from 'webtorrent'
-import { UserVideoRateType, VideoRateType } from '../../../../../shared'
+import { UserVideoRateType, VideoRateType, FeedFormat } from '../../../../../shared'
 import '../../../assets/player/peertube-videojs-plugin'
 import { AuthService, ConfirmService } from '../../core'
 import { VideoBlacklistService } from '../../shared'
@@ -21,6 +21,7 @@ import { MarkdownService } from '../shared'
 import { VideoDownloadComponent } from './modal/video-download.component'
 import { VideoReportComponent } from './modal/video-report.component'
 import { VideoShareComponent } from './modal/video-share.component'
+import { environment } from '../../../environments/environment'
 import { getVideojsOptions } from '../../../assets/player/peertube-player'
 
 @Component({
@@ -37,6 +38,11 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
   @ViewChild('videoSupportModal') videoSupportModal: VideoSupportComponent
 
   otherVideosDisplayed: Video[] = []
+
+  syndication = {
+    isSupported: true,
+    items: {}
+  }
 
   player: videojs.Player
   playerElement: HTMLVideoElement
@@ -98,14 +104,15 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
       }
 
       const uuid = routeParams['uuid']
-      // Video did not changed
+      // Video did not change
       if (this.video && this.video.uuid === uuid) return
-
+      // Video did change
       this.videoService.getVideo(uuid).subscribe(
         video => {
           const startTime = this.route.snapshot.queryParams.start
           this.onVideoFetched(video, startTime)
             .catch(err => this.handleError(err))
+	  this.generateSyndicationList(video)
         },
 
         error => {
@@ -240,6 +247,16 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
     if (!this.video || Array.isArray(this.video.tags) === false) return []
 
     return this.video.tags.join(', ')
+  }
+
+  generateSyndicationList (video: Video) {
+    const feeds = this.videoService.getAccountFeed(
+      this.video.account.name,
+      (this.video.isLocal) ? environment.apiUrl : this.video.account.host
+    )
+    this.syndication.items['rss 2.0'] = feeds[FeedFormat.RSS]
+    this.syndication.items['atom 1.0'] = feeds[FeedFormat.ATOM]
+    this.syndication.items['json 1.0'] = feeds[FeedFormat.JSON]
   }
 
   isVideoRemovable () {

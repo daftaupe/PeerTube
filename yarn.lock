@@ -2093,6 +2093,12 @@ fecha@^2.3.2:
   version "2.3.3"
   resolved "https://registry.yarnpkg.com/fecha/-/fecha-2.3.3.tgz#948e74157df1a32fd1b12c3a3c3cdcb6ec9d96cd"
 
+feed@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/feed/-/feed-1.1.1.tgz#914897517e94fa327cc6f73bb585a47c4a9ed321"
+  dependencies:
+    xml "^1.0.1"
+
 figures@^1.0.1:
   version "1.7.0"
   resolved "https://registry.yarnpkg.com/figures/-/figures-1.7.0.tgz#cbe1e3affcf1cd44b80cadfed28dc793a9701d2e"
@@ -6791,6 +6797,10 @@ xdg-basedir@^3.0.0:
 xhr2@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/xhr2/-/xhr2-0.1.4.tgz#7f87658847716db5026323812f818cadab387a5f"
+
+xml@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/xml/-/xml-1.0.1.tgz#78ba72020029c5bc87b8a81a3cfcd74b4a2fc1e5"
 
 xmldom@0.1.19:
   version "0.1.19"

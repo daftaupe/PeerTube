@@ -1,8 +1,33 @@
+@import '_mixins';
+
 .videos {
   text-align: center;
 
   my-video-miniature {
     text-align: left;
+  }
+}
+
+.margin-content {
+  a {
+    text-decoration: none;
+    color: black;
+    
+    &:hover {
+      text-decoration: none;
+    }
+  }
+
+  .icon {
+    @include icon(12px);
+
+    margin-left: 10px;
+
+    &.icon-syndication {
+      position: relative;
+      top: -2px;
+      background-image: url('../../../assets/images/global/syndication.svg');
+    }
   }
 }
 
