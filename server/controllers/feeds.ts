@@ -1,34 +1,16 @@
 import * as express from 'express'
-import * as Bluebird from 'bluebird'
-import { getFormattedObjects } from '../helpers/utils'
-import { CONFIG, STATIC_PATHS } from '../initializers'
-import {
-  asyncMiddleware,
-  feedsValidator,
-  paginationValidator,
-  setDefaultPagination,
-  setDefaultSort,
-  usersGetValidator,
-  videosAddValidator,
-  videosGetValidator,
-  videosRemoveValidator,
-  videosSearchValidator,
-  videosSortValidator,
-  videosUpdateValidator
-} from '../middlewares'
+import { CONFIG } from '../initializers'
+import { asyncMiddleware, feedsValidator } from '../middlewares'
 import { VideoModel } from '../models/video/video'
 import { UserModel } from '../models/account/user'
-import { AccountModel } from '../models/account/account'
-import * as url from 'url'
-import { logger } from '../helpers/logger'
-// @ts-ignore
-const Feed = require('pfeed')
+import * as Feed from 'pfeed'
+import { ResultList } from '../../shared/models'
 
 const feedsRouter = express.Router()
 
 // multipurpose endpoint
-feedsRouter.use('/feeds/videos.(xml|json1?|rss2?|atom1?)',
-  feedsValidator,
+feedsRouter.get('/feeds/videos.:format',
+  asyncMiddleware(feedsValidator),
   asyncMiddleware(generateFeed)
 )
 
@@ -46,46 +28,45 @@ async function generateFeed (req: express.Request, res: express.Response, next: 
   let feedCount = 10
   let feedSort = '-createdAt'
 
-  // should we limit results to an account?
-  // (beware, only user accounts have videos)
-  let isAccountFiltering = false
+  // Should we limit results to an account?
   let accountId: number
-  let accountName: string
-  if (req.query.accountId || req.query.accountName) {
-    isAccountFiltering = true
-  }
 
   if (req.query.accountId) {
     accountId = req.query.accountId
   } else if (req.query.accountName) {
     const userNameToId = await UserModel.loadByUsername(req.query.accountName)
-    // we need the user id and not the account id, since only user accounts have videos
-    accountId = userNameToId.toFormattedJSON().id
+    // We need the user id and not the account id, since only user accounts have videos
+    accountId = userNameToId.Account.id
   }
 
-  let resultList: {
-    data: VideoModel[];
-    total: number;
-  }
-  if (isAccountFiltering) {
+  let resultList: ResultList<VideoModel>
+
+  if (accountId) {
     resultList = await VideoModel.listUserVideosForApi(
       accountId,
       feedStart,
       feedCount,
-      feedSort
+      feedSort,
+      true
     )
   } else {
-    resultList = await Bluebird.resolve(VideoModel.listForApi(
+    resultList = await VideoModel.listForApi(
       feedStart,
       feedCount,
       feedSort,
-      req.query.filter
-    ))
+      req.query.filter,
+      true
+    )
   }
 
-  // adding video items to the feed, one at a time
+  // Adding video items to the feed, one at a time
   resultList.data.forEach(video => {
-    const formattedAccount = video.VideoChannel.Account.toFormattedJSON()
+    const formattedVideoFiles = video.getFormattedVideoFilesJSON()
+    const torrents = formattedVideoFiles.map(videoFile => ({
+      title: video.name,
+      url: videoFile.torrentUrl,
+      size_in_bytes: videoFile.size
+    }))
 
     feed.addItem({
       title: video.name,
@@ -93,25 +74,19 @@ async function generateFeed (req: express.Request, res: express.Response, next: 
       link: video.url,
       description: video.getTruncatedDescription(),
       content: video.description,
-      author: [{
-        name: formattedAccount.displayName,
-        link: formattedAccount.url
-      }],
-      date: video.publishedAt,
-      torrent: [
+      author: [
         {
-          title: video.name,
-          url: 'https://example.com/test.torrent',
-          size_in_bytes: 42
+          name: video.VideoChannel.Account.getDisplayName(),
+          link: video.VideoChannel.Account.Actor.url
         }
-      ]
+      ],
+      date: video.publishedAt,
+      torrent: torrents
     })
   })
 
-  /*
-  Now the feed generation is done, let's send it!
-  */
-  returnFeed(feed, req, res)
+  // Now the feed generation is done, let's send it!
+  return sendFeed(feed, req, res)
 }
 
 function initFeed () {
@@ -141,28 +116,30 @@ function initFeed () {
   })
 }
 
-function returnFeed (feed, req: express.Request, res: express.Response) {
-  // if the pathname ends with a feed extension, respect it
-  const pathname = url.parse(req.originalUrl).pathname
-  if (pathname.endsWith('.atom') ||
-      pathname.endsWith('.atom1')) {
+function sendFeed (feed, req: express.Request, res: express.Response) {
+  const format = req.params.format
+
+  if (format.endsWith('.atom') || format.endsWith('.atom1')) {
     res.set('Content-Type', 'application/atom+xml')
-    res.send(feed.atom1())
-  } else if (pathname.endsWith('.json') ||
-             pathname.endsWith('.json1')) {
-    res.set('Content-Type', 'application/json')
-    res.send(feed.json1())
-  } else if (pathname.endsWith('.rss') ||
-             pathname.endsWith('.rss2')) {
-    res.set('Content-Type', 'application/rss+xml')
-    res.send(feed.rss2())
-  // else we're in the ambiguous '.xml' case and we look at the format query parameter
-  } else if (req.query.format === 'atom' ||
-             req.query.format === 'atom1') {
-    res.set('Content-Type', 'application/atom+xml')
-    res.send(feed.atom1())
-  } else {
-    res.set('Content-Type', 'application/rss+xml')
-    res.send(feed.rss2())
+    return res.send(feed.atom1()).end()
   }
+
+  if (format.endsWith('.json') || format.endsWith('.json1')) {
+    res.set('Content-Type', 'application/json')
+    return res.send(feed.json1()).end()
+  }
+
+  if (format.endsWith('.rss') || format.endsWith('.rss2')) {
+    res.set('Content-Type', 'application/rss+xml')
+    return res.send(feed.rss2()).end()
+  }
+
+  // We're in the ambiguous '.xml' case and we look at the format query parameter
+  if (req.query.format === 'atom' || req.query.format === 'atom1') {
+    res.set('Content-Type', 'application/atom+xml')
+    return res.send(feed.atom1()).end()
+  }
+
+  res.set('Content-Type', 'application/rss+xml')
+  return res.send(feed.rss2()).end()
 }
