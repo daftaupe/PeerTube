@@ -118,7 +118,7 @@ export class VideoService {
   }
 
   baseFeed () {
-    let feed = {}
+    const feed = {}
 
     for (let item in FeedFormat) {
       feed[FeedFormat[item]] = VideoService.BASE_FEEDS_URL + item.toLowerCase()
@@ -130,12 +130,11 @@ export class VideoService {
   getFeed (
     filter?: VideoFilter
   ) {
-    let params = new HttpParams()
-    params = this.restService.addRestGetParams(params)
-    let feed = this.baseFeed()
+    const params = this.restService.addRestGetParams(new HttpParams())
+    const feed = this.baseFeed()
 
     if (filter) {
-      params = params.set('filter', filter)
+      params.set('filter', filter)
     }
     for (let item in feed) {
       feed[item] = feed[item] + params.toString()
@@ -148,11 +147,10 @@ export class VideoService {
     accountName: string,
     host?: string
   ) {
-    let params = new HttpParams()
-    params = this.restService.addRestGetParams(params)
-    params = params.set('accountName', accountName)
-    let feed = this.baseFeed()
+    const params = this.restService.addRestGetParams(new HttpParams())
+    const feed = this.baseFeed()
 
+    params.set('accountName', accountName)
     for (let item in feed) {
       feed[item] = feed[item] + '?' + params.toString()
     }

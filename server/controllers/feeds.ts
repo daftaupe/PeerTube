@@ -22,7 +22,7 @@ import { AccountModel } from '../models/account/account'
 import * as url from 'url'
 import { logger } from '../helpers/logger'
 // @ts-ignore
-const Feed = require('feed')
+const Feed = require('pfeed')
 
 const feedsRouter = express.Router()
 
@@ -68,12 +68,12 @@ async function generateFeed (req: express.Request, res: express.Response, next: 
     total: number;
   }
   if (isAccountFiltering) {
-    resultList = await Bluebird.resolve(VideoModel.listUserVideosForApi(
+    resultList = await VideoModel.listUserVideosForApi(
       accountId,
       feedStart,
       feedCount,
       feedSort
-    ))
+    )
   } else {
     resultList = await Bluebird.resolve(VideoModel.listForApi(
       feedStart,
@@ -85,7 +85,7 @@ async function generateFeed (req: express.Request, res: express.Response, next: 
 
   // adding video items to the feed, one at a time
   resultList.data.forEach(video => {
-    const formattedAccount = video.toFormattedJSON().account
+    const formattedAccount = video.VideoChannel.Account.toFormattedJSON()
 
     feed.addItem({
       title: video.name,
@@ -95,11 +95,16 @@ async function generateFeed (req: express.Request, res: express.Response, next: 
       content: video.description,
       author: [{
         name: formattedAccount.displayName,
-        email: formattedAccount.url,
         link: formattedAccount.url
       }],
       date: video.publishedAt,
-      image: CONFIG.WEBSERVER.URL + video.getThumbnailPath()
+      torrent: [
+        {
+          title: video.name,
+          url: 'https://example.com/test.torrent',
+          size_in_bytes: 42
+        }
+      ]
     })
   })
 
@@ -115,13 +120,13 @@ function initFeed () {
   return new Feed({
     title: CONFIG.INSTANCE.NAME,
     description: CONFIG.INSTANCE.SHORT_DESCRIPTION,
+    // updated: TODO: somehowGetLatestUpdate, // optional, default = today
     id: webserverUrl,
     link: webserverUrl,
     image: webserverUrl + '/client/assets/images/icons/icon-96x96.png',
     favicon: webserverUrl + '/client/assets/images/favicon.png',
     copyright: `All rights reserved, unless otherwise specified in the terms specified at ${webserverUrl}/about` +
-     `and potential licenses given by content`,
-    // updated: TODO: somehowGetLatestUpdate, // optional, default = today
+    ` and potential licenses granted by each content's rightholder.`,
     generator: `Toraifōsu`, // ^.~
     feedLinks: {
       json: `${webserverUrl}/feeds/videos.json`,
@@ -151,7 +156,7 @@ function returnFeed (feed, req: express.Request, res: express.Response) {
              pathname.endsWith('.rss2')) {
     res.set('Content-Type', 'application/rss+xml')
     res.send(feed.rss2())
-  // else we look at the format query parameter
+  // else we're in the ambiguous '.xml' case and we look at the format query parameter
   } else if (req.query.format === 'atom' ||
              req.query.format === 'atom1') {
     res.set('Content-Type', 'application/atom+xml')
