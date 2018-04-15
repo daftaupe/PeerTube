@@ -2,13 +2,12 @@ import * as express from 'express'
 import { CONFIG } from '../initializers'
 import { asyncMiddleware, feedsValidator } from '../middlewares'
 import { VideoModel } from '../models/video/video'
-import { UserModel } from '../models/account/user'
 import * as Feed from 'pfeed'
 import { ResultList } from '../../shared/models'
+import { AccountModel } from '../models/account/account'
 
 const feedsRouter = express.Router()
 
-// multipurpose endpoint
 feedsRouter.get('/feeds/videos.:format',
   asyncMiddleware(feedsValidator),
   asyncMiddleware(generateFeed)
@@ -28,22 +27,12 @@ async function generateFeed (req: express.Request, res: express.Response, next: 
   let feedCount = 10
   let feedSort = '-createdAt'
 
-  // Should we limit results to an account?
-  let accountId: number
-
-  if (req.query.accountId) {
-    accountId = req.query.accountId
-  } else if (req.query.accountName) {
-    const userNameToId = await UserModel.loadByUsername(req.query.accountName)
-    // We need the user id and not the account id, since only user accounts have videos
-    accountId = userNameToId.Account.id
-  }
-
   let resultList: ResultList<VideoModel>
+  const account: AccountModel = res.locals.account
 
-  if (accountId) {
+  if (account) {
     resultList = await VideoModel.listUserVideosForApi(
-      accountId,
+      account.id,
       feedStart,
       feedCount,
       feedSort,
@@ -119,17 +108,17 @@ function initFeed () {
 function sendFeed (feed, req: express.Request, res: express.Response) {
   const format = req.params.format
 
-  if (format.endsWith('.atom') || format.endsWith('.atom1')) {
+  if (format === 'atom' || format === 'atom1') {
     res.set('Content-Type', 'application/atom+xml')
     return res.send(feed.atom1()).end()
   }
 
-  if (format.endsWith('.json') || format.endsWith('.json1')) {
+  if (format === 'json' || format === 'json1') {
     res.set('Content-Type', 'application/json')
     return res.send(feed.json1()).end()
   }
 
-  if (format.endsWith('.rss') || format.endsWith('.rss2')) {
+  if (format === 'rss' || format === 'rss2') {
     res.set('Content-Type', 'application/rss+xml')
     return res.send(feed.rss2()).end()
   }
